@@ -1,0 +1,282 @@
+<!-- templates/customers.html -->
+{% extends "layout.html" %}
+
+{% block title %}Customers - Invoicing App{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="fas fa-users me-2"></i>Customers</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                <i class="fas fa-plus me-2"></i>Add Customer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <form method="GET" action="{{ url_for('customers') }}">
+            <div class="input-group">
+                <input type="text" class="form-control" name="search" placeholder="Search customers..." 
+                       value="{{ search }}">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-4 text-end">
+        <span class="text-muted">Showing {{ customers|length }} of {{ total }} customers</span>
+    </div>
+</div>
+
+<!-- Customers Table -->
+<div class="card">
+    <div class="card-body">
+        {% if customers %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>City</th>
+                        <th>Country</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>
+                            <strong>{{ customer.name }}</strong>
+                            {% if customer.tax_id %}
+                            <br><small class="text-muted">Tax ID: {{ customer.tax_id }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ customer.email or '-' }}</td>
+                        <td>{{ customer.phone or '-' }}</td>
+                        <td>{{ customer.city or '-' }}</td>
+                        <td>{{ customer.country or '-' }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" 
+                                        onclick="editCustomer('{{ customer|tojson }}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger"
+                                        onclick="deleteCustomer('{{ customer.id }}', '{{ customer.name }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <a href="{{ url_for('invoices') }}?customer={{ customer.id }}"
+                                   class="btn btn-outline-success">
+                                    <i class="fas fa-file-invoice"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if total > 20 %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('customers', page=page-1, search=search) }}">
+                        Previous
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for p in range(1, (total // 20) + 2) %}
+                {% if p >= page-2 and p <= page+2 %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('customers', page=p, search=search) }}">{{ p }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+                
+                {% if page < (total // 20) + 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('customers', page=page+1, search=search) }}">
+                        Next
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No customers found</h5>
+            <p class="text-muted">
+                {% if search %}
+                No customers match your search "{{ search }}"
+                {% else %}
+                Get started by adding your first customer
+                {% endif %}
+            </p>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                <i class="fas fa-plus me-2"></i>Add Customer
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add/Edit Customer Modal -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Add Customer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="customerForm">
+                    <input type="hidden" id="customerId" name="id">
+                    
+                    <div class="mb-3">
+                        <label for="customerName" class="form-label">Customer Name *</label>
+                        <input type="text" class="form-control" id="customerName" name="name" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="customerEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="customerEmail" name="email">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="customerPhone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="customerPhone" name="phone">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="customerAddress" class="form-label">Address</label>
+                        <textarea class="form-control" id="customerAddress" name="address" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="customerCity" class="form-label">City</label>
+                            <input type="text" class="form-control" id="customerCity" name="city">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="customerCountry" class="form-label">Country</label>
+                            <input type="text" class="form-control" id="customerCountry" name="country">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="customerTaxId" class="form-label">Tax ID/VAT Number</label>
+                            <input type="text" class="form-control" id="customerTaxId" name="tax_id">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="customerNotes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="customerNotes" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveCustomerBtn">Save Customer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let editingCustomer = null;
+
+function editCustomer(customer) {
+    editingCustomer = customer;
+    document.getElementById('modalTitle').textContent = 'Edit Customer';
+    document.getElementById('customerId').value = customer.id;
+    document.getElementById('customerName').value = customer.name || '';
+    document.getElementById('customerEmail').value = customer.email || '';
+    document.getElementById('customerPhone').value = customer.phone || '';
+    document.getElementById('customerAddress').value = customer.address || '';
+    document.getElementById('customerCity').value = customer.city || '';
+    document.getElementById('customerCountry').value = customer.country || '';
+    document.getElementById('customerTaxId').value = customer.tax_id || '';
+    document.getElementById('customerNotes').value = customer.notes || '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
+    modal.show();
+}
+
+function deleteCustomer(id, name) {
+    if (confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+        fetch(`/api/customers?id=${id}`, {
+            method: 'DELETE',
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Failed to delete customer');
+            }
+        })
+        .catch(error => {
+            alert('Error deleting customer');
+            console.error(error);
+        });
+    }
+}
+
+document.getElementById('saveCustomerBtn').addEventListener('click', async function() {
+    const form = document.getElementById('customerForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    const method = data.id ? 'PUT' : 'POST';
+    const url = '/api/customers';
+    
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert(result.error || 'Operation failed');
+        }
+    } catch (error) {
+        alert('Network error. Please try again.');
+        console.error(error);
+    }
+});
+
+// Reset form when modal is hidden
+document.getElementById('addCustomerModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('modalTitle').textContent = 'Add Customer';
+    document.getElementById('customerForm').reset();
+    document.getElementById('customerId').value = '';
+    editingCustomer = null;
+});
+</script>
+{% endblock %}

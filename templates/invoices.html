@@ -1,0 +1,615 @@
+<!-- templates/invoices.html -->
+{% extends "layout.html" %}
+
+{% block title %}Invoices - Invoicing App{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="fas fa-file-invoice me-2"></i>Invoices</h2>
+            <a href="#createInvoice" class="btn btn-primary" data-bs-toggle="modal">
+                <i class="fas fa-plus me-2"></i>Create Invoice
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('invoices') }}" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="search" 
+                       placeholder="Search by invoice # or customer..." value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" name="status">
+                    <option value="">All Statuses</option>
+                    <option value="draft" {% if status == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="sent" {% if status == 'sent' %}selected{% endif %}>Sent</option>
+                    <option value="viewed" {% if status == 'viewed' %}selected{% endif %}>Viewed</option>
+                    <option value="paid" {% if status == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="overdue" {% if status == 'overdue' %}selected{% endif %}>Overdue</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-filter me-2"></i>Filter
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a href="{{ url_for('invoices') }}" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-redo me-2"></i>Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Invoices Table -->
+<div class="card">
+    <div class="card-body">
+        {% if invoices %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Due Date</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end">Balance</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr>
+                        <td>
+                            <strong>{{ invoice.invoice_number }}</strong>
+                            {% if invoice.reference %}
+                            <br><small class="text-muted">Ref: {{ invoice.reference }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ invoice.customer_name }}</td>
+                        <td>{{ invoice.issue_date }}</td>
+                        <td>
+                            {{ invoice.due_date }}
+                            {% if invoice.status == 'overdue' %}
+                            <span class="badge bg-danger ms-1">OVERDUE</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">KES {{ "%.2f"|format(invoice.total_amount|float) }}</td>
+                        <td class="text-end">KES {{ "%.2f"|format(invoice.balance_due|float) }}</td>
+                        <td>
+                            <span class="badge bg-{{ 
+                                'success' if invoice.status == 'paid' 
+                                else 'warning' if invoice.status == 'sent' 
+                                else 'danger' if invoice.status == 'overdue'
+                                else 'info' if invoice.status == 'viewed'
+                                else 'secondary'
+                            }}">
+                                {{ invoice.status|upper }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('invoice_detail', invoice_id=invoice.id) }}" 
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button class="btn btn-outline-success" 
+                                        onclick="recordPayment('{{ invoice.id }}, {{ invoice.balance_due }}')">
+                                    <i class="fas fa-credit-card"></i>
+                                </button>
+                                <a href="{{ url_for('invoice_detail', invoice_id=invoice.id) }}?print" 
+                                   target="_blank" class="btn btn-outline-info">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if total > 20 %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" 
+                       href="{{ url_for('invoices', page=page-1, search=search, status=status) }}">
+                        Previous
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for p in range(1, (total // 20) + 2) %}
+                {% if p >= page-2 and p <= page+2 %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" 
+                       href="{{ url_for('invoices', page=p, search=search, status=status) }}">
+                        {{ p }}
+                    </a>
+                </li>
+                {% endif %}
+                {% endfor %}
+                
+                {% if page < (total // 20) + 1 %}
+                <li class="page-item">
+                    <a class="page-link" 
+                       href="{{ url_for('invoices', page=page+1, search=search, status=status) }}">
+                        Next
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No invoices found</h5>
+            <p class="text-muted">
+                {% if search or status %}
+                No invoices match your filters
+                {% else %}
+                Create your first invoice to get started
+                {% endif %}
+            </p>
+            <a href="#createInvoice" class="btn btn-primary" data-bs-toggle="modal">
+                <i class="fas fa-plus me-2"></i>Create Invoice
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Create Invoice Modal (Simplified) -->
+<div class="modal fade" id="createInvoice" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Invoice</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="invoiceForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Customer *</label>
+                            <select class="form-select" id="invoiceCustomer" required>
+                                <option value="">Select Customer</option>
+                                <!-- Will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Invoice Date *</label>
+                            <input type="date" class="form-control" id="invoiceDate" 
+                                   value="{{ now().strftime('%Y-%m-%d') }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Due Date *</label>
+                            <input type="date" class="form-control" id="dueDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Currency</label>
+                            <select class="form-select" id="invoiceCurrency">
+                                <option value="KES" selected>KES - Kenyan Shilling</option>
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Invoice Items -->
+                    <h6 class="mb-3">Invoice Items</h6>
+                    <div id="invoiceItems">
+                        <div class="invoice-item row mb-3">
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" placeholder="Description" 
+                                       name="description" required>
+                            </div>
+                            <div class="col-md-2">
+                                <input type="number" class="form-control" placeholder="Qty" 
+                                       name="quantity" value="1" min="0.01" step="0.01" required>
+                            </div>
+                            <div class="col-md-2">
+                                <input type="number" class="form-control" placeholder="Price" 
+                                       name="unit_price" min="0" step="0.01" required>
+                            </div>
+                            <div class="col-md-2">
+                                <input type="number" class="form-control" placeholder="Tax %" 
+                                       name="tax_rate" value="16" min="0" max="100" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-outline-secondary btn-sm mb-3" 
+                            onclick="addInvoiceItem()">
+                        <i class="fas fa-plus me-1"></i>Add Item
+                    </button>
+                    
+                    <!-- Totals -->
+                    <div class="row justify-content-end">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>Subtotal:</td>
+                                    <td class="text-end" id="subtotalDisplay">KES 0.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Tax:</td>
+                                    <td class="text-end" id="taxDisplay">KES 0.00</td>
+                                </tr>
+                                <tr class="table-active">
+                                    <td><strong>Total:</strong></td>
+                                    <td class="text-end"><strong id="totalDisplay">KES 0.00</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="invoiceNotes" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Terms & Conditions</label>
+                        <textarea class="form-control" id="invoiceTerms" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createInvoice()">
+                    Create Invoice
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Record Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Record Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <input type="hidden" id="paymentInvoiceId">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Invoice Balance</label>
+                        <div class="form-control-plaintext" id="invoiceBalanceDisplay"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Payment Amount *</label>
+                        <input type="number" class="form-control" id="paymentAmount" 
+                               min="0.01" step="0.01" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method *</label>
+                        <select class="form-select" id="paymentMethod" required>
+                            <option value="">Select Method</option>
+                            <option value="cash">Cash</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="credit_card">Credit Card</option>
+                            <option value="mobile_money">Mobile Money</option>
+                            <option value="check">Check</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Reference Number</label>
+                        <input type="text" class="form-control" id="paymentReference">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Payment Date *</label>
+                        <input type="date" class="form-control" id="paymentDate" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="paymentNotes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitPayment()">
+                    Record Payment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    
+    let currentInvoiceId = null;
+    let currentBalance = 0;
+
+    // Load customers for dropdown
+    async function loadCustomers() {
+        console.log("🔍 Loading customers for dropdown...");
+        
+        try {
+            const response = await fetch('/api/customers');
+            console.log("🔍 API Response status:", response.status);
+            
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error("🔍 Non-JSON response:", text.substring(0, 200));
+                alert('Server returned an error. Check console for details.');
+                return;
+            }
+            
+            const data = await response.json();
+            console.log("🔍 API Response data:", data);
+            
+            const select = document.getElementById('invoiceCustomer');
+            select.innerHTML = '<option value="">Select Customer</option>';
+            
+            // Handle different response formats
+            let customers = [];
+            
+            if (data.data && Array.isArray(data.data)) {
+                // Format 1: {data: [...]}
+                customers = data.data;
+            } else if (Array.isArray(data)) {
+                // Format 2: [...]
+                customers = data;
+            } else if (data.rows && Array.isArray(data.rows)) {
+                // Format 3: {rows: [...]} (MyRDBMS format)
+                customers = data.rows;
+            } else if (data.success && data.data) {
+                // Format 4: {success: true, data: [...]}
+                customers = data.data;
+            }
+            
+            console.log(`🔍 Found ${customers.length} customers to display`);
+            
+            if (customers.length === 0) {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "No customers found";
+                option.disabled = true;
+                select.appendChild(option);
+                console.warn("⚠️ No customers found in database");
+                return;
+            }
+            
+            customers.forEach(customer => {
+                const option = document.createElement('option');
+                option.value = customer.id || customer.ID;
+                option.textContent = customer.name || customer.Name || `Customer ${customer.id}`;
+                select.appendChild(option);
+            });
+            
+            console.log("✅ Customers loaded successfully");
+            
+        } catch (error) {
+            console.error('❌ Error loading customers:', error);
+            alert('Error loading customers. Please check console for details.');
+        }
+    }
+
+    loadCustomers();
+
+    // Set due date to 30 days from now
+    document.getElementById('dueDate').value = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        .toISOString().split('T')[0];
+
+    function addInvoiceItem() {
+        const container = document.getElementById('invoiceItems');
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'invoice-item row mb-3';
+        itemDiv.innerHTML = `
+            <div class="col-md-6">
+                <input type="text" class="form-control" placeholder="Description" name="description" required>
+            </div>
+            <div class="col-md-2">
+                <input type="number" class="form-control" placeholder="Qty" name="quantity" 
+                    value="1" min="0.01" step="0.01" required>
+            </div>
+            <div class="col-md-2">
+                <input type="number" class="form-control" placeholder="Price" name="unit_price" 
+                    min="0" step="0.01" required>
+            </div>
+            <div class="col-md-2">
+                <div class="input-group">
+                    <input type="number" class="form-control" placeholder="Tax %" name="tax_rate" 
+                        value="16" min="0" max="100" step="0.01">
+                    <button type="button" class="btn btn-outline-danger" onclick="this.closest('.invoice-item').remove(); calculateTotals();">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(itemDiv);
+        
+        // Add event listeners to new inputs
+        itemDiv.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', calculateTotals);
+        });
+    }
+
+    function calculateTotals() {
+        let subtotal = 0;
+        let tax = 0;
+        
+        document.querySelectorAll('.invoice-item').forEach(item => {
+            const qty = parseFloat(item.querySelector('[name="quantity"]').value) || 0;
+            const price = parseFloat(item.querySelector('[name="unit_price"]').value) || 0;
+            const taxRate = parseFloat(item.querySelector('[name="tax_rate"]').value) || 0;
+            
+            const itemTotal = qty * price;
+            const itemTax = itemTotal * (taxRate / 100);
+            
+            subtotal += itemTotal;
+            tax += itemTax;
+        });
+        
+        const total = subtotal + tax;
+        
+        document.getElementById('subtotalDisplay').textContent = `KES ${subtotal.toFixed(2)}`;
+        document.getElementById('taxDisplay').textContent = `KES ${tax.toFixed(2)}`;
+        document.getElementById('totalDisplay').textContent = `KES ${total.toFixed(2)}`;
+    }
+
+    function recordPayment(invoiceId, balance) {
+        currentInvoiceId = invoiceId;
+        currentBalance = balance;
+        
+        document.getElementById('paymentInvoiceId').value = invoiceId;
+        document.getElementById('invoiceBalanceDisplay').textContent = `KES ${balance.toFixed(2)}`;
+        document.getElementById('paymentAmount').value = balance.toFixed(2);
+        document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('paymentReference').value = '';
+        document.getElementById('paymentNotes').value = '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+        modal.show();
+    }
+
+    async function submitPayment() {
+        const data = {
+            amount: parseFloat(document.getElementById('paymentAmount').value),
+            payment_method: document.getElementById('paymentMethod').value,
+            reference_number: document.getElementById('paymentReference').value,
+            payment_date: document.getElementById('paymentDate').value,
+            notes: document.getElementById('paymentNotes').value
+        };
+        
+        if (!data.payment_method) {
+            alert('Please select a payment method');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/invoices/${currentInvoiceId}/pay`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('Payment recorded successfully');
+                location.reload();
+            } else {
+                alert(result.error || 'Failed to record payment');
+            }
+        } catch (error) {
+            alert('Network error. Please try again.');
+            console.error(error);
+        }
+    }
+
+    async function createInvoice() {
+        const customerId = document.getElementById('invoiceCustomer').value;
+        if (!customerId) {
+            alert('Please select a customer');
+            return;
+        }
+        
+        // Collect items
+        const items = [];
+        document.querySelectorAll('.invoice-item').forEach(item => {
+            items.push({
+                description: item.querySelector('[name="description"]').value,
+                quantity: parseFloat(item.querySelector('[name="quantity"]').value),
+                unit_price: parseFloat(item.querySelector('[name="unit_price"]').value),
+                tax_rate: parseFloat(item.querySelector('[name="tax_rate"]').value) || 0
+            });
+        });
+        
+        if (items.length === 0) {
+            alert('Please add at least one item');
+            return;
+        }
+        
+        const data = {
+            customer_id: parseInt(customerId),
+            issue_date: document.getElementById('invoiceDate').value,
+            due_date: document.getElementById('dueDate').value,
+            currency: document.getElementById('invoiceCurrency').value,
+            notes: document.getElementById('invoiceNotes').value,
+            terms: document.getElementById('invoiceTerms').value,
+            status: 'draft',
+            items: items
+        };
+        
+        try {
+            const response = await fetch('/api/invoices', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert(`Invoice ${result.invoice_number} created successfully!`);
+                window.location.href = `/invoice/${result.invoice_id}`;
+            } else {
+                alert(result.error || 'Failed to create invoice');
+            }
+        } catch (error) {
+            alert('Network error. Please try again.');
+            console.error(error);
+        }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCustomers();
+        
+        // Calculate totals on input
+        document.querySelectorAll('#invoiceItems input').forEach(input => {
+            input.addEventListener('input', calculateTotals);
+        });
+        
+        // Initial calculation
+        calculateTotals();
+        
+        // Set max payment amount to balance
+        document.getElementById('paymentAmount').addEventListener('input', function() {
+            if (parseFloat(this.value) > currentBalance) {
+                this.value = currentBalance;
+            }
+        });
+    });
+</script>
+{% endblock %}

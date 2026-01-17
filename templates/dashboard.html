@@ -1,0 +1,190 @@
+<!-- templates/dashboard.html -->
+{% extends "layout.html" %}
+
+{% block title %}Dashboard - Invoicing App{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+        <p class="text-muted">Welcome back, {{ user.full_name }}! Here's your business overview.</p>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">CUSTOMERS</h6>
+                        <h2 class="mb-0">{{ stats.customer_count or 0 }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x opacity-50"></i>
+                    </div>
+                </div>
+                <a href="{{ url_for('customers') }}" class="text-white small d-block mt-2">
+                    View All <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">INVOICES</h6>
+                        <h2 class="mb-0">{{ stats.invoice_count or 0 }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file-invoice fa-2x opacity-50"></i>
+                    </div>
+                </div>
+                <a href="{{ url_for('invoices') }}" class="text-white small d-block mt-2">
+                    View All <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">OUTSTANDING</h6>
+                        <h2 class="mb-0">KES {{ "%.2f"|format(stats.total_outstanding or 0) }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="small text-dark mt-2">Amount pending collection</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">TOTAL PAID</h6>
+                        <h2 class="mb-0">KES {{ "%.2f"|format(stats.total_paid or 0) }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-credit-card fa-2x opacity-50"></i>
+                    </div>
+                </div>
+                <a href="{{ url_for('payments') }}" class="text-white small d-block mt-2">
+                    View Payments <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Invoices -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Invoices</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_invoices %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Customer</th>
+                                <th>Issue Date</th>
+                                <th>Due Date</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in recent_invoices %}
+                            <tr>
+                                <td>{{ invoice.invoice_number }}</td>
+                                <td>{{ invoice.name }}</td>
+                                <td>{{ invoice.issue_date }}</td>
+                                <td>{{ invoice.due_date }}</td>
+                                <td>KES {{ "%.2f"|format(invoice.total_amount|float) }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 
+                                        'success' if invoice.status == 'paid' 
+                                        else 'warning' if invoice.status == 'sent' 
+                                        else 'danger' if invoice.status == 'overdue'
+                                        else 'secondary'
+                                    }}">
+                                        {{ invoice.status|upper }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('invoice_detail', invoice_id=invoice.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No invoices yet. Create your first invoice!</p>
+                    <a href="{{ url_for('invoices') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create Invoice
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('customers') }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-user-plus me-2"></i>Add Customer
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('invoices') }}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-file-invoice me-2"></i>Create Invoice
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('payments') }}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-credit-card me-2"></i>Record Payment
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('invoices') }}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-chart-bar me-2"></i>View Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

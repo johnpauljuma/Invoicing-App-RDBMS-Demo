@@ -1,0 +1,324 @@
+/* static/css/style.css */
+:root {
+    --primary-color: #4361ee;
+    --secondary-color: #3a0ca3;
+    --success-color: #4cc9f0;
+    --danger-color: #f72585;
+    --warning-color: #f8961e;
+    --info-color: #7209b7;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.badge {
+    padding: 0.4em 0.8em;
+    font-weight: 500;
+}
+
+.btn {
+    border-radius: 0.375rem;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+/* Status badges */
+.badge.bg-success { background-color: var(--success-color) !important; }
+.badge.bg-warning { background-color: var(--warning-color) !important; }
+.badge.bg-danger { background-color: var(--danger-color) !important; }
+.badge.bg-info { background-color: var(--info-color) !important; }
+
+/* Dashboard cards */
+.card.bg-primary { background-color: var(--primary-color) !important; }
+.card.bg-success { background-color: var(--success-color) !important; }
+.card.bg-warning { background-color: var(--warning-color) !important; }
+.card.bg-info { background-color: var(--info-color) !important; }
+
+/* Invoice status colors */
+.status-draft { color: #6c757d; }
+.status-sent { color: #ffc107; }
+.status-viewed { color: #17a2b8; }
+.status-paid { color: #28a745; }
+.status-overdue { color: #dc3545; }
+
+/* Loading spinner */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Responsive tables */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Print styles for invoices */
+@media print {
+    .navbar, .footer, .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+
+:root {
+    --primary-color: #4361ee;
+    --secondary-color: #3a0ca3;
+    --success-color: #4cc9f0;
+    --danger-color: #f72585;
+    --warning-color: #f8961e;
+    --info-color: #7209b7;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    padding-top: 20px;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+    margin-bottom: 1.5rem;
+    border-radius: 0.5rem;
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0,0,0,.125);
+    background-color: rgba(0,0,0,.02);
+    padding: 1rem 1.25rem;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    background-color: rgba(0,0,0,.02);
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.badge {
+    padding: 0.4em 0.8em;
+    font-weight: 500;
+    border-radius: 0.375rem;
+}
+
+.btn {
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,.1);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Status badges */
+.badge.bg-success { background-color: #28a745 !important; }
+.badge.bg-warning { background-color: #ffc107 !important; color: #212529; }
+.badge.bg-danger { background-color: #dc3545 !important; }
+.badge.bg-info { background-color: #17a2b8 !important; }
+.badge.bg-secondary { background-color: #6c757d !important; }
+
+/* Dashboard cards */
+.card.bg-primary { background: linear-gradient(135deg, #4361ee, #3a0ca3) !important; }
+.card.bg-success { background: linear-gradient(135deg, #4cc9f0, #4895ef) !important; }
+.card.bg-warning { background: linear-gradient(135deg, #f8961e, #f3722c) !important; }
+.card.bg-info { background: linear-gradient(135deg, #7209b7, #560bad) !important; }
+
+.card.bg-primary, .card.bg-success, .card.bg-warning, .card.bg-info {
+    color: white;
+    border: none;
+}
+
+.card.bg-primary a, 
+.card.bg-success a, 
+.card.bg-warning a, 
+.card.bg-info a {
+    color: rgba(255,255,255,.8);
+    text-decoration: none;
+}
+
+.card.bg-primary a:hover, 
+.card.bg-success a:hover, 
+.card.bg-warning a:hover, 
+.card.bg-info a:hover {
+    color: white;
+}
+
+/* Invoice status colors */
+.status-draft { color: #6c757d; }
+.status-sent { color: #ffc107; }
+.status-viewed { color: #17a2b8; }
+.status-paid { color: #28a745; }
+.status-overdue { color: #dc3545; }
+
+/* Loading spinner */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Invoice items table */
+.table tfoot tr:last-child td {
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Modal customizations */
+.modal-header {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Form controls */
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+}
+
+/* Responsive tables */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Print styles for invoices */
+@media print {
+    .navbar, .footer, .btn, .no-print {
+        display: none !important;
+    }
+    
+    body {
+        font-size: 12px;
+        padding: 0;
+        background: white;
+    }
+    
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    .table th, .table td {
+        padding: 0.25rem;
+    }
+}
+
+/* Footer */
+.footer {
+    margin-top: 3rem;
+    padding: 1rem 0;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Invoice items input */
+.invoice-item .input-group .btn-outline-danger {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* Hover effects */
+.table-hover tbody tr:hover {
+    background-color: rgba(67, 97, 238, 0.05);
+}
+
+/* Badge customizations */
+.badge {
+    text-transform: uppercase;
+    font-size: 0.7em;
+    letter-spacing: 0.5px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
+}
